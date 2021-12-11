@@ -5,4 +5,8 @@ export default class Settings {
     public bold: boolean,
     public italic: boolean,
   ) {}
+
+  get calculatedLineHeight(): number {
+    return this.size * this.lineHeight;
+  }
 }

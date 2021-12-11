@@ -1,16 +1,11 @@
 import Settings from './Settings';
-
-interface ParsedText {
-  offsetLeft: number;
-  offsetTop: number;
-  font: string;
-  value: string;
-}
+import Parser from './Parser';
 
 export default class Editor {
   private _ctx: CanvasRenderingContext2D;
-  private _settings = new Settings(16, 1.5, false, false);
   private _text: string[] = [];
+  private _settings = new Settings(16, 1.5, false, false);
+  private _parser = new Parser();
 
   constructor(private _canvas: HTMLCanvasElement) {
     this._ctx = _canvas.getContext('2d')!;
@@ -24,6 +19,20 @@ export default class Editor {
     });
   }
 
+  draw(x?: number, y?: number): void {
+    if (x) this.x = x;
+    if (y) this.y = y;
+
+    this.clear();
+    this._drawBackground();
+    this._drawOutline();
+    this._drawText();
+  }
+
+  clear(): void {
+    this._ctx.clearRect(0, 0, this.x, this.y);
+  }
+
   private _handleKeyPress(e: KeyboardEvent): void {
     this._text.push(e.key);
     this.draw();
@@ -34,16 +43,6 @@ export default class Editor {
 
     this._text.pop();
     this.draw();
-  }
-
-  draw(x?: number, y?: number): void {
-    if (x) this.x = x;
-    if (y) this.y = y;
-
-    this.clear();
-    this._drawBackground();
-    this._drawOutline();
-    this._drawText();
   }
 
   private _drawBackground(): void {
@@ -59,14 +58,16 @@ export default class Editor {
   private _drawText(): void {
     this._ctx.fillStyle = '#000';
 
-    this._parsedText.forEach(({ offsetTop, offsetLeft, value, font }) => {
+    const parsedText = this._parser.parseText({
+      ctx: this._ctx,
+      settings: this._settings,
+      text: this._text,
+      maxWidth: this.x,
+    });
+    parsedText.forEach(({ offsetTop, offsetLeft, value, font }) => {
       this._ctx.font = font;
       this._ctx.fillText(value, offsetLeft, offsetTop);
     });
-  }
-
-  clear(): void {
-    this._ctx.clearRect(0, 0, this.x, this.y);
   }
 
   get x(): number {
@@ -75,44 +76,6 @@ export default class Editor {
 
   get y(): number {
     return this._canvas.height;
-  }
-
-  private get _parsedText(): ParsedText[] {
-    let currentOffsetTop = this._calculatedLineHeight;
-    let currentOffsetLeft = 0;
-
-    return this._text.reduce((acc, value) => {
-      const { width } = this._ctx.measureText(value);
-
-      if (width + currentOffsetLeft > this.x) {
-        currentOffsetTop += this._calculatedLineHeight;
-        currentOffsetLeft = 0;
-      }
-
-      const updatedAcc: ParsedText[] = [
-        ...acc,
-        {
-          font: this._formattedFont,
-          offsetTop: currentOffsetTop,
-          offsetLeft: currentOffsetLeft,
-          value,
-        },
-      ];
-
-      currentOffsetLeft += width;
-
-      return updatedAcc;
-    }, [] as ParsedText[]);
-  }
-
-  private get _formattedFont(): string {
-    return `${this._settings.size}px${this._settings.bold ? ' bold' : ''}${
-      this._settings.italic ? ' italic' : ''
-    } Helvetica`;
-  }
-
-  private get _calculatedLineHeight(): number {
-    return this._settings.size * this._settings.lineHeight;
   }
 
   private set x(value: number) {
