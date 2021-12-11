@@ -15,32 +15,40 @@ export default class Editor {
   constructor(private _canvas: HTMLCanvasElement) {
     this._ctx = _canvas.getContext('2d')!;
 
-    window.addEventListener('keypress', (e) => {
-      if (!this._text.length) this._text.push('');
+    window.addEventListener('keypress', this._handleKeyPress);
+    window.addEventListener('keydown', this._handleKeyDown);
 
-      this._text[this._text.length - 1] += e.key;
-
-      if (e.key === ' ') this._text.push('');
-
-      this.draw();
+    window.addEventListener('unload', () => {
+      window.removeEventListener('keypress', this._handleKeyPress);
+      window.removeEventListener('keydown', this._handleKeyDown);
     });
+  }
 
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Backspace' && this._text.length) {
-        const currentText = this._text[this._text.length - 1];
+  private _handleKeyPress(e: KeyboardEvent): void {
+    if (!this._text.length) this._text.push('');
 
-        if (currentText.length <= 1) {
-          this._text.pop();
-        } else {
-          this._text[this._text.length - 1] = currentText.slice(
-            0,
-            currentText.length - 1,
-          );
-        }
+    this._text[this._text.length - 1] += e.key;
 
-        this.draw();
-      }
-    });
+    if (e.key === ' ') this._text.push('');
+
+    this.draw();
+  }
+
+  private _handleKeyDown(e: KeyboardEvent): void {
+    if (e.key !== 'Backspace' || !this._text.length) return;
+
+    const currentText = this._text[this._text.length - 1];
+
+    if (currentText.length <= 1) {
+      this._text.pop();
+    } else {
+      this._text[this._text.length - 1] = currentText.slice(
+        0,
+        currentText.length - 1,
+      );
+    }
+
+    this.draw();
   }
 
   draw(x?: number, y?: number): void {
