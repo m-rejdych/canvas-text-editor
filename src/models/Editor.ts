@@ -15,8 +15,8 @@ export default class Editor {
   constructor(private _canvas: HTMLCanvasElement) {
     this._ctx = _canvas.getContext('2d')!;
 
-    window.addEventListener('keypress', this._handleKeyPress);
-    window.addEventListener('keydown', this._handleKeyDown);
+    window.addEventListener('keypress', this._handleKeyPress.bind(this));
+    window.addEventListener('keydown', this._handleKeyDown.bind(this));
 
     window.addEventListener('unload', () => {
       window.removeEventListener('keypress', this._handleKeyPress);
@@ -25,29 +25,14 @@ export default class Editor {
   }
 
   private _handleKeyPress(e: KeyboardEvent): void {
-    if (!this._text.length) this._text.push('');
-
-    this._text[this._text.length - 1] += e.key;
-
-    if (e.key === ' ') this._text.push('');
-
+    this._text.push(e.key);
     this.draw();
   }
 
   private _handleKeyDown(e: KeyboardEvent): void {
     if (e.key !== 'Backspace' || !this._text.length) return;
 
-    const currentText = this._text[this._text.length - 1];
-
-    if (currentText.length <= 1) {
-      this._text.pop();
-    } else {
-      this._text[this._text.length - 1] = currentText.slice(
-        0,
-        currentText.length - 1,
-      );
-    }
-
+    this._text.pop();
     this.draw();
   }
 
@@ -56,16 +41,22 @@ export default class Editor {
     if (y) this.y = y;
 
     this.clear();
-    this.drawBackground();
-    this.drawText();
+    this._drawBackground();
+    this._drawOutline();
+    this._drawText();
   }
 
-  private drawBackground(): void {
+  private _drawBackground(): void {
     this._ctx.fillStyle = '#fff';
     this._ctx.fillRect(0, 0, this.x, this.y);
   }
 
-  private drawText(): void {
+  private _drawOutline(): void {
+    this._ctx.strokeStyle = '#555';
+    this._ctx.strokeRect(0, 0, this.x, this.y);
+  }
+
+  private _drawText(): void {
     this._ctx.fillStyle = '#000';
 
     this._parsedText.forEach(({ offsetTop, offsetLeft, value, font }) => {
