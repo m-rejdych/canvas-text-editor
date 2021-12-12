@@ -7,10 +7,10 @@ const main = (): void => {
   ) as HTMLCanvasElement;
 
   const editor = new Editor(canvas);
-  editor.draw(window.innerWidth * 0.5, window.innerHeight - 128);
+  editor.draw({ x: window.innerWidth * 0.5, y: window.innerHeight - 128 });
 
   window.addEventListener('resize', () => {
-    editor.draw(window.innerWidth * 0.5, window.innerHeight - 128);
+    editor.draw({ x: window.innerWidth * 0.5, y: window.innerHeight - 128 });
   });
 };
 

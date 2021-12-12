@@ -1,53 +1,51 @@
+import type ParsedText from '../interfaces/ParsedText';
+import type Settings from './Settings';
+
+interface DrawPayload {
+  parsedText: ParsedText[];
+  ctx: CanvasRenderingContext2D;
+  settings: Settings;
+  moveLeft?: boolean;
+}
+
 export default class Caret {
-  private _interval?: NodeJS.Timer;
+  index = 0;
 
   constructor(
     private _offsetLeft: number,
     private _offsetTop: number,
     private _width: number,
     private _height: number,
-  ) {
-    window.addEventListener('unload', () => {
-      if (this._interval) {
-        clearInterval(this._interval);
-      }
-    })
-  }
+  ) {}
 
-  setPosition(offsetX: number, offsetY: number): void {
+  private _setPosition(offsetX: number, offsetY: number): void {
     this._offsetLeft = offsetX;
     this._offsetTop = offsetY;
   }
 
-  move(offsetX: number, offsetY: number): void {
-    this._offsetLeft += offsetX;
-    this._offsetTop += offsetY;
-  }
+  draw({ parsedText, ctx, settings, moveLeft = true }: DrawPayload) {
+    if (parsedText.length) {
+      if (moveLeft) this.index = parsedText.length - 1;
 
-  draw(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(this._offsetLeft, this._offsetTop, this._width, this._height);
+      if (this.index === -1) {
+        this._setPosition(0, 0);
+        return;
+      }
 
-    if (this._interval) {
-      clearInterval(this._interval);
+      const caretPosition = parsedText[this.index];
+      const { value, offsetLeft, offsetTop } = caretPosition;
+      const { width } = ctx.measureText(value);
+
+      this._setPosition(offsetLeft + width, offsetTop - settings.size / 1.25);
+    } else {
+      this._setPosition(
+        0,
+        settings.calculatedLineHeight - settings.size / 1.25,
+      );
+      this.index = -1;
     }
 
-    const interval = setInterval(this.blink.bind(this, ctx), 1000);
-    this._interval = interval;
-  }
-
-  blink(ctx: CanvasRenderingContext2D): void {
-    this.clear(ctx);
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = '#000';
     ctx.fillRect(this._offsetLeft, this._offsetTop, this._width, this._height);
-
-    setTimeout(() => {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(this._offsetLeft, this._offsetTop, this._width, this._height);
-    }, 500);
-  }
-
-  clear(ctx: CanvasRenderingContext2D): void {
-    ctx.clearRect(this._offsetLeft, this._offsetTop, this._width, this._height);
   }
 }

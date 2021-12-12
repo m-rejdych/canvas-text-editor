@@ -1,6 +1,14 @@
 import Settings from './Settings';
 import Parser from './Parser';
 import Caret from './Caret';
+import type ParsedText from '../interfaces/ParsedText';
+import { FUNCTIONAL_BUTTONS, ARROW_KEYS } from '../constants/buttons';
+
+interface DrawPayload {
+  x?: number;
+  y?: number;
+  moveCaretLeft?: boolean;
+}
 
 export default class Editor {
   private _ctx: CanvasRenderingContext2D;
@@ -26,15 +34,20 @@ export default class Editor {
     });
   }
 
-  draw(x?: number, y?: number): void {
-    if (x) this.x = x;
-    if (y) this.y = y;
+  draw(options?: DrawPayload): void {
+    if (options?.x) this.x = options?.x;
+    if (options?.y) this.y = options?.y;
 
     this.clear();
     this._drawBackground();
     this._drawOutline();
     this._drawText();
-    this._caret.draw(this._ctx);
+    this._caret.draw({
+      parsedText: this._parsedText,
+      ctx: this._ctx,
+      settings: this._settings,
+      moveLeft: options?.moveCaretLeft,
+    });
   }
 
   clear(): void {
@@ -47,10 +60,31 @@ export default class Editor {
   }
 
   private _handleKeyDown(e: KeyboardEvent): void {
-    if (e.key !== 'Backspace' || !this._text.length) return;
+    if (
+      !Object.values(FUNCTIONAL_BUTTONS).includes(e.key) ||
+      !this._text.length
+    )
+      return;
 
-    this._text.pop();
-    this.draw();
+    switch (e.key) {
+      case FUNCTIONAL_BUTTONS.BACKSPACE:
+        this._text.pop();
+        break;
+      case FUNCTIONAL_BUTTONS.ARROW_RIGHT:
+        if (this._caret.index < this._parsedText.length - 1) {
+          this._caret.index++;
+        }
+        break;
+      case FUNCTIONAL_BUTTONS.ARROW_LEFT:
+        if (this._caret.index >= 0) {
+          this._caret.index--;
+        }
+        break;
+      default:
+        break;
+    }
+
+    this.draw({ moveCaretLeft: !Object.values(ARROW_KEYS).includes(e.key) });
   }
 
   private _drawBackground(): void {
@@ -66,26 +100,10 @@ export default class Editor {
   private _drawText(): void {
     this._ctx.fillStyle = '#000';
 
-    const parsedText = this._parser.parseText({
-      ctx: this._ctx,
-      settings: this._settings,
-      text: this._text,
-      maxWidth: this.x,
-    });
-    parsedText.forEach(({ offsetTop, offsetLeft, value, font }) => {
+    this._parsedText.forEach(({ offsetTop, offsetLeft, value, font }) => {
       this._ctx.font = font;
       this._ctx.fillText(value, offsetLeft, offsetTop);
     });
-
-    if (parsedText.length) {
-      const { value, offsetLeft, offsetTop } =
-        parsedText[parsedText.length - 1];
-      const { width } = this._ctx.measureText(value);
-      this._caret.setPosition(
-        offsetLeft + width,
-        offsetTop - this._settings.size / 1.25,
-      );
-    }
   }
 
   get x(): number {
@@ -94,6 +112,15 @@ export default class Editor {
 
   get y(): number {
     return this._canvas.height;
+  }
+
+  private get _parsedText(): ParsedText[] {
+    return this._parser.parseText({
+      ctx: this._ctx,
+      settings: this._settings,
+      text: this._text,
+      maxWidth: this.x,
+    });
   }
 
   private set x(value: number) {
