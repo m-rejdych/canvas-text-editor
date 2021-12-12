@@ -1,11 +1,18 @@
 import Settings from './Settings';
 import Parser from './Parser';
+import Caret from './Caret';
 
 export default class Editor {
   private _ctx: CanvasRenderingContext2D;
   private _text: string[] = [];
   private _settings = new Settings(16, 1.5, false, false);
   private _parser = new Parser();
+  private _caret = new Caret(
+    0,
+    this._settings.calculatedLineHeight - this._settings.size / 1.25,
+    1,
+    this._settings.size,
+  );
 
   constructor(private _canvas: HTMLCanvasElement) {
     this._ctx = _canvas.getContext('2d')!;
@@ -27,6 +34,7 @@ export default class Editor {
     this._drawBackground();
     this._drawOutline();
     this._drawText();
+    this._caret.draw(this._ctx);
   }
 
   clear(): void {
@@ -68,6 +76,16 @@ export default class Editor {
       this._ctx.font = font;
       this._ctx.fillText(value, offsetLeft, offsetTop);
     });
+
+    if (parsedText.length) {
+      const { value, offsetLeft, offsetTop } =
+        parsedText[parsedText.length - 1];
+      const { width } = this._ctx.measureText(value);
+      this._caret.setPosition(
+        offsetLeft + width,
+        offsetTop - this._settings.size / 1.25,
+      );
+    }
   }
 
   get x(): number {
