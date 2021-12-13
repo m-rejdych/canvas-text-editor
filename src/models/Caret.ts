@@ -12,15 +12,15 @@ export default class Caret {
   index = 0;
 
   constructor(
-    private _offsetLeft: number,
-    private _offsetTop: number,
-    private _width: number,
-    private _height: number,
+    public offsetLeft: number,
+    public offsetTop: number,
+    public width: number,
+    public height: number,
   ) {}
 
-  private _setPosition(offsetX: number, offsetY: number): void {
-    this._offsetLeft = offsetX;
-    this._offsetTop = offsetY;
+  setPosition(offsetX: number, offsetY: number): void {
+    this.offsetLeft = offsetX;
+    this.offsetTop = offsetY;
   }
 
   draw({ parsedText, ctx, settings, moveLeft = true }: DrawPayload) {
@@ -28,7 +28,7 @@ export default class Caret {
       if (moveLeft) this.index = parsedText.length - 1;
 
       if (this.index === -1) {
-        this._setPosition(0, 0);
+        this.setPosition(0, 0);
         return;
       }
 
@@ -36,9 +36,9 @@ export default class Caret {
       const { value, offsetLeft, offsetTop } = caretPosition;
       const { width } = ctx.measureText(value);
 
-      this._setPosition(offsetLeft + width, offsetTop - settings.size / 1.25);
+      this.setPosition(offsetLeft + width, offsetTop - settings.size / 1.25);
     } else {
-      this._setPosition(
+      this.setPosition(
         0,
         settings.calculatedLineHeight - settings.size / 1.25,
       );
@@ -46,6 +46,6 @@ export default class Caret {
     }
 
     ctx.fillStyle = '#000';
-    ctx.fillRect(this._offsetLeft, this._offsetTop, this._width, this._height);
+    ctx.fillRect(this.offsetLeft, this.offsetTop, this.width, this.height);
   }
 }
