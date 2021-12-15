@@ -59,8 +59,9 @@ export default class Editor {
   }
 
   private _handleKeyPress(e: KeyboardEvent): void {
-    this._text.push(e.key);
-    this.draw();
+    this._text.splice(this._caret.index + 1, 0, e.key);
+    this._caret.index++;
+    this.draw({ moveCaretLeft: false });
   }
 
   private _handleKeyDown(e: KeyboardEvent): void {
