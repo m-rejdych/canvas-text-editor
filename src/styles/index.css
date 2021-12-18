@@ -10,11 +10,15 @@ html {
 body {
   box-sizing: inherit;
   height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .canvas-container {
-  background-color: #ccc;
-  height: 100%;
+  border: 1px solid #ccc;
+  height: calc(100% - 128px);
+  width: calc(50% + 128px);
   display: flex;
   align-items: center;
   justify-content: center;

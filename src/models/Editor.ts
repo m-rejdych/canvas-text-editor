@@ -44,7 +44,6 @@ export default class Editor {
 
     this.clear();
     this._drawBackground();
-    this._drawOutline();
     this._drawText();
     this._caret.draw({
       parsedText: this._parsedText,
@@ -143,11 +142,6 @@ export default class Editor {
   private _drawBackground(): void {
     this._ctx.fillStyle = '#fff';
     this._ctx.fillRect(0, 0, this.x, this.y);
-  }
-
-  private _drawOutline(): void {
-    this._ctx.strokeStyle = '#555';
-    this._ctx.strokeRect(0, 0, this.x, this.y);
   }
 
   private _drawText(): void {
